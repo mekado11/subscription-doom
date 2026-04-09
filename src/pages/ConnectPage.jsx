@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-
 const SCAN_STEPS = [
   'Reading transactions...',
   'Detecting subscriptions...',
@@ -55,7 +54,6 @@ export default function ConnectPage() {
               boxShadow: '0 0 50px rgba(124,58,237,0.5)',
             }}
           >
-            {/* Lock SVG */}
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0110 0v4"/>
@@ -76,12 +74,8 @@ export default function ConnectPage() {
           <div className="text-center mb-8">
             <div
               className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center"
-              style={{
-                background: 'rgba(139,92,246,0.15)',
-                border: '1px solid rgba(139,92,246,0.3)',
-              }}
+              style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)' }}
             >
-              {/* Search SVG */}
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"/>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -91,28 +85,19 @@ export default function ConnectPage() {
             <p className="text-white/50 text-sm">6 months of transactions</p>
           </div>
 
-          {/* Progress bar */}
-          <div
-            className="rounded-full overflow-hidden mb-3"
-            style={{ height: 4, background: 'rgba(255,255,255,0.08)' }}
-          >
+          <div className="rounded-full overflow-hidden mb-3" style={{ height: 4, background: 'rgba(255,255,255,0.08)' }}>
             <div
               className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${progress}%`,
-                background: 'linear-gradient(90deg, #7C3AED, #EC4899)',
-              }}
+              style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #7C3AED, #EC4899)' }}
             />
           </div>
           <p className="text-white/40 text-sm text-center mb-8">{scanLabel}</p>
 
-          {/* Animated leak previews */}
           <div className="space-y-3">
             {LEAKS_PREVIEW.slice(0, scanLeaksVisible).map(leak => (
               <div
                 key={leak.label}
                 className="glass rounded-2xl px-4 py-3 flex items-center justify-between"
-                style={{ animation: 'fadeUp 0.4s ease forwards' }}
               >
                 <span className="text-white/80 text-sm font-medium">{leak.label}</span>
                 <span className="font-bold text-sm" style={{ color: leak.color }}>{leak.amount}</span>
@@ -143,30 +128,29 @@ export default function ConnectPage() {
       </header>
 
       {/* Hero */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 pb-10 text-center">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 pb-6 text-center">
 
-        {/* Stat card — believable range, framed as a discovery */}
+        {/* Stat card */}
         <div className="glass rounded-3xl px-8 py-6 max-w-xs w-full mb-7">
-          <p className="text-white/50 text-sm mb-3">On their first scan, most people find</p>
-          <div className="flex items-baseline justify-center gap-1 mb-1">
-            <span
-              className="text-5xl font-black tracking-tight"
-              style={{
-                background: 'linear-gradient(135deg, #A78BFA, #F472B6)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              $200–$600
-            </span>
-          </div>
-          <p className="text-white/40 text-sm">in monthly leaks they forgot about</p>
+          <p className="text-white/50 text-sm mb-2">On their first scan, most people find</p>
+          <p
+            className="text-5xl font-black tracking-tight mb-1"
+            style={{
+              background: 'linear-gradient(135deg, #A78BFA, #F472B6)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            $200–$600
+            <span className="text-2xl">/month</span>
+          </p>
+          <p className="text-white/40 text-sm">they didn't realize they were spending</p>
         </div>
 
-        {/* Headline — personal + urgency */}
+        {/* Headline */}
         <h1 className="text-white text-[2rem] font-black leading-tight mb-3 max-w-xs">
-          You're probably losing{' '}
+          You might be leaking money{' '}
           <span
             style={{
               background: 'linear-gradient(135deg, #A78BFA, #F472B6)',
@@ -175,85 +159,53 @@ export default function ConnectPage() {
               backgroundClip: 'text',
             }}
           >
-            $300/month.
+            every month
           </span>
-          <br />
-          <span className="text-white">Time to find out.</span>
         </h1>
 
-        {/* Subtext — tight, clear, with urgency */}
+        {/* Subtext */}
         <p className="text-white/50 text-base max-w-xs leading-relaxed mb-8">
-          Scan 6 months of transactions. See every forgotten subscription,
-          impulse habit, and silent drain. Takes 60 seconds. Free.
+          We scan your last 6 months and show every subscription, habit, and
+          hidden spend. Takes 60 seconds. Free.
         </p>
 
-        {/* Social proof — live feel, reduces hesitation */}
-        <div className="flex items-center justify-center gap-2 mb-5">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-white/50 text-xs">1,247 people scanned their accounts today</span>
-        </div>
-
-        {/* Primary CTA — personal, action-driven */}
+        {/* Primary CTA */}
         <button
           onClick={handleDemoConnect}
-          className="w-full max-w-xs text-white font-bold text-base py-4 rounded-2xl mb-3 transition-transform active:scale-95"
+          className="w-full max-w-xs text-white font-bold text-base py-4 rounded-2xl mb-4 transition-transform active:scale-95"
           style={{
             background: 'linear-gradient(135deg, #7C3AED, #EC4899)',
             boxShadow: '0 8px 32px rgba(124,58,237,0.45)',
           }}
         >
-          Show Me My Leaks →
+          Find My Leaks
         </button>
 
-        {/* Secondary CTA */}
+        {/* Trust text */}
+        <p className="text-white/35 text-xs mb-2">
+          Secured by Plaid · Read-only · No data selling
+        </p>
+
+        {/* Manual entry fallback */}
         <button
-          onClick={handleDemoConnect}
-          className="w-full max-w-xs text-white/70 font-semibold text-sm py-3.5 rounded-2xl glass transition-transform active:scale-95 mb-8"
+          onClick={() => navigate('/manual-entry')}
+          className="text-white/40 text-xs underline underline-offset-2 mb-8"
         >
-          Try Demo First
+          My bank isn't listed — enter manually
         </button>
-
-        {/* Trust signals — recognizable, at the decision moment */}
-        <div className="flex items-center justify-center gap-3 w-full max-w-xs">
-          {[
-            {
-              label: 'Plaid Secured',
-              icon: (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-              ),
-            },
-            {
-              label: '256-bit SSL',
-              icon: (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0110 0v4"/>
-                </svg>
-              ),
-            },
-            {
-              label: 'Read-Only',
-              icon: (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              ),
-            },
-          ].map(({ label, icon }) => (
-            <div
-              key={label}
-              className="flex-1 flex flex-col items-center gap-1.5 glass rounded-xl py-3 px-2"
-            >
-              <span className="text-white/40">{icon}</span>
-              <span className="text-white/50 text-xs font-medium leading-tight text-center">{label}</span>
-            </div>
-          ))}
-        </div>
-
       </main>
+
+      {/* Bank logos banner — drop banks.png into public/ folder */}
+      <div className="px-4 pb-8">
+        <img
+          src="/banks.png"
+          alt="Works with Chase, Bank of America, Wells Fargo, Citi, US Bank, PNC and more"
+          className="w-full max-w-sm mx-auto block rounded-2xl"
+          style={{ opacity: 0.9 }}
+          onError={e => { e.currentTarget.style.display = 'none' }}
+        />
+      </div>
+
     </div>
   )
 }
