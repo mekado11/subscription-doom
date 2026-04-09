@@ -66,9 +66,9 @@ function CancelModal({ sub, onClose, onUpgrade }) {
   const info = sub.cancelInfo
   const difficultyColor = { Easy: '#34D399', Medium: '#FBBF24', Hard: '#F87171' }
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4"
+    <div className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-24 pt-4"
       style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }}>
-      <div className="glass rounded-3xl w-full max-w-sm overflow-hidden">
+      <div className="glass rounded-3xl w-full max-w-sm overflow-auto max-h-full">
         <div className="p-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
           <div className="flex items-center gap-3 mb-1">
             <BrandAvatar letter={sub.letter} color={sub.color} size={40} />
@@ -501,11 +501,13 @@ export default function DashboardPage() {
             style={{ background: GRAD_CTA }}>$</div>
           <span className="text-white font-bold text-base">SubDoom</span>
         </div>
-        <button onClick={() => navigate('/profile')} className="text-white/40 hover:text-white/70 transition-colors">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        <button onClick={() => navigate('/subscribe')}
+          className="relative flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #7C3AED22, #EC489922)', border: '1px solid rgba(167,139,250,0.25)', color: '#A78BFA' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
+          Pro
         </button>
       </header>
 

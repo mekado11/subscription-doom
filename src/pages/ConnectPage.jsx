@@ -250,16 +250,7 @@ export default function ConnectPage({ scanning = false }) {
     <div className="min-h-screen flex flex-col">
 
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-white text-sm"
-            style={{ background: 'linear-gradient(135deg, #7C3AED, #EC4899)' }}
-          >
-            $
-          </div>
-          <span className="text-white font-bold text-lg tracking-tight">SubDoom</span>
-        </div>
+      <header className="flex items-center justify-end px-6 py-5">
         <span className="text-xs text-white/40 glass rounded-full px-3 py-1.5">Free Beta</span>
       </header>
 
@@ -270,7 +261,7 @@ export default function ConnectPage({ scanning = false }) {
         <div className="glass rounded-3xl px-8 py-6 max-w-xs w-full mb-7">
           <p className="text-white/50 text-sm mb-2">On their first scan, most people find</p>
           <p
-            className="text-5xl font-black tracking-tight mb-1"
+            className="text-4xl font-black tracking-tight mb-1 whitespace-nowrap"
             style={{
               background: 'linear-gradient(135deg, #A78BFA, #F472B6)',
               WebkitBackgroundClip: 'text',
@@ -278,8 +269,7 @@ export default function ConnectPage({ scanning = false }) {
               backgroundClip: 'text',
             }}
           >
-            $200–$600
-            <span className="text-2xl">/month</span>
+            $200–$600<span className="text-xl font-bold">/mo</span>
           </p>
           <p className="text-white/40 text-sm">they didn't realize they were spending</p>
         </div>
