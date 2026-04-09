@@ -3,81 +3,61 @@ import { useNavigate } from 'react-router-dom'
 import { generateMockTransactions } from '../utils/mockTransactions'
 import { analyzeTransactions } from '../utils/analyzer'
 import { futureValue, formatCurrency } from '../utils/calculator'
+import { CategoryIcon, BrandAvatar } from '../components/Icons'
 
-// ── Helpers ──────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fmt(n) {
   return '$' + Math.round(n).toLocaleString()
 }
-
 function fmtCompact(n) {
-  if (n >= 1000) return '$' + Math.round(n / 1000) + 'k'
-  return '$' + Math.round(n)
+  return n >= 1000 ? '$' + Math.round(n / 1000) + 'k' : '$' + Math.round(n)
 }
 
-// ── Sub-components ───────────────────────────────────────────────
+const GRAD = 'linear-gradient(135deg, #A78BFA, #F472B6)'
+const GRAD_CTA = 'linear-gradient(135deg, #7C3AED, #EC4899)'
 
-function TopHero({ summary }) {
-  return (
-    <div className="bg-gradient-to-b from-[#1E1408] to-doom-bg border-b border-doom-border px-6 py-8 text-center">
-      <div className="flex items-center justify-center gap-2 mb-1">
-        <h1 className="text-doom-text text-4xl font-bold tracking-tight">
-          {fmt(summary.totalMonthly)}
-        </h1>
-        <span className="text-doom-amber text-lg font-semibold">/ month</span>
-        <span className="text-xl">💸</span>
-      </div>
-      <p className="text-doom-muted text-sm mb-1">Quietly leaving your life</p>
-      <p className="text-doom-muted text-base">
-        <span className="text-doom-gold font-semibold">{fmt(summary.totalYearly)}</span>
-        {' '}/ year
-      </p>
-    </div>
-  )
+// ── Icon resolver — works for both subscriptions and habits ───────────────────
+
+function ItemIcon({ item, size = 40 }) {
+  if (item.type === 'subscription') {
+    return <BrandAvatar letter={item.letter} color={item.color} size={size} />
+  }
+  return <CategoryIcon category={item.category} color={item.color} size={size} />
 }
 
-function SectionHeader({ title, subtitle, onMore }) {
-  return (
-    <div className="flex items-center justify-between mb-4">
-      <div>
-        <h2 className="text-doom-text font-bold text-base">{title}</h2>
-        {subtitle && <p className="text-doom-muted text-xs mt-0.5">{subtitle}</p>}
-      </div>
-      {onMore && (
-        <button onClick={onMore} className="text-doom-muted text-xl leading-none">···</button>
-      )}
-    </div>
-  )
-}
+// ── Sub-components ────────────────────────────────────────────────────────────
 
-function LeakCard({ item, rank }) {
+function LeakCard({ item }) {
   const fv10 = futureValue(item.monthlyAvg, 10)
   return (
-    <div className="bg-doom-card border border-doom-border rounded-2xl p-4">
+    <div className="glass rounded-2xl p-4">
       <div className="flex items-center gap-3 mb-3">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-          style={{ backgroundColor: item.color + '22', border: `1px solid ${item.color}44` }}
-        >
-          {item.emoji}
-        </div>
+        <ItemIcon item={item} size={40} />
         <div className="flex-1 min-w-0">
-          <p className="text-doom-text font-semibold text-sm truncate">
+          <p className="text-white font-semibold text-sm truncate">
             {item.label ?? item.merchant}
+          </p>
+          <p className="text-white/40 text-xs mt-0.5">
+            {item.type === 'subscription' ? 'Subscription' : 'Habit spending'}
           </p>
         </div>
         <div className="text-right flex-shrink-0">
-          <p className="text-doom-text font-bold text-sm">
-            <span className="text-doom-amber">{fmt(item.monthlyAvg)}</span>
-            <span className="text-doom-muted text-xs">/mo</span>
+          <p className="text-white font-bold text-sm">
+            <span className="text-violet-400">{fmt(item.monthlyAvg)}</span>
+            <span className="text-white/40 text-xs">/mo</span>
           </p>
-          <p className="text-doom-muted text-xs">– {fmtCompact(item.yearlyTotal)}/yr</p>
+          <p className="text-white/40 text-xs">– {fmtCompact(item.yearlyTotal)}/yr</p>
         </div>
       </div>
-      <div className="flex items-center gap-1.5 text-doom-green text-xs">
-        <span>→</span>
-        <span className="font-semibold">{fmtCompact(fv10)}</span>
-        <span className="text-doom-muted">if invested over 10 years</span>
+      {/* Investment projection pill */}
+      <div
+        className="rounded-xl px-3 py-2 flex items-center gap-1.5"
+        style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.15)' }}
+      >
+        <span className="text-emerald-400 text-xs">→</span>
+        <span className="text-emerald-400 font-bold text-sm">{fmtCompact(fv10)}</span>
+        <span className="text-white/35 text-xs">if invested over 10 years</span>
       </div>
     </div>
   )
@@ -85,17 +65,15 @@ function LeakCard({ item, rank }) {
 
 function SubscriptionRow({ sub }) {
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-doom-border last:border-0">
-      <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
-        style={{ backgroundColor: sub.color + '22' }}
-      >
-        {sub.emoji}
-      </div>
-      <span className="text-doom-text text-sm flex-1">{sub.merchant}</span>
+    <div
+      className="flex items-center gap-3 py-3.5 border-b last:border-0"
+      style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+    >
+      <BrandAvatar letter={sub.letter} color={sub.color} size={36} />
+      <span className="text-white text-sm flex-1">{sub.merchant}</span>
       <div className="text-right">
-        <span className="text-doom-text font-semibold text-sm">{fmt(sub.monthlyAvg)}</span>
-        <span className="text-doom-muted text-xs">/mo</span>
+        <span className="text-white font-semibold text-sm">{fmt(sub.monthlyAvg)}</span>
+        <span className="text-white/40 text-xs">/mo</span>
       </div>
     </div>
   )
@@ -104,18 +82,29 @@ function SubscriptionRow({ sub }) {
 function HabitBar({ habit, maxAmount }) {
   const pct = Math.round((habit.monthlyAvg / maxAmount) * 100)
   return (
-    <div className="py-3 border-b border-doom-border last:border-0">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-base">{habit.emoji}</span>
-          <span className="text-doom-text text-sm">{habit.label}</span>
+    <div
+      className="py-3.5 border-b last:border-0"
+      style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+    >
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-2.5">
+          <CategoryIcon category={habit.category} color={habit.color} size={32} />
+          <span className="text-white text-sm">{habit.label}</span>
         </div>
-        <span className="text-doom-amber font-bold text-sm">{fmt(habit.monthlyAvg)}/mo</span>
+        <span className="font-bold text-sm" style={{ color: habit.color }}>
+          {fmt(habit.monthlyAvg)}/mo
+        </span>
       </div>
-      <div className="h-1.5 bg-doom-border rounded-full overflow-hidden">
+      <div
+        className="h-1.5 rounded-full overflow-hidden"
+        style={{ background: 'rgba(255,255,255,0.07)' }}
+      >
         <div
           className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, backgroundColor: habit.color }}
+          style={{
+            width: `${pct}%`,
+            background: `linear-gradient(90deg, ${habit.color}66, ${habit.color})`,
+          }}
         />
       </div>
     </div>
@@ -123,40 +112,41 @@ function HabitBar({ habit, maxAmount }) {
 }
 
 function WhatIfRow({ habit, enabled, onToggle }) {
-  const saved5yr = futureValue(habit.monthlyAvg, 5)
-  const saved10yr = futureValue(habit.monthlyAvg, 10)
-
+  const s5 = futureValue(habit.monthlyAvg, 5)
+  const s10 = futureValue(habit.monthlyAvg, 10)
   return (
-    <div className="py-3 border-b border-doom-border last:border-0">
+    <div
+      className="py-3.5 border-b last:border-0"
+      style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+    >
       <div className="flex items-center gap-3">
-        {/* Toggle */}
         <button
           onClick={() => onToggle(habit.category)}
-          className={`w-5 h-5 rounded flex-shrink-0 border-2 flex items-center justify-center transition-colors ${
-            enabled
-              ? 'bg-doom-amber border-doom-amber'
-              : 'bg-transparent border-doom-muted'
-          }`}
+          className="w-5 h-5 rounded flex-shrink-0 flex items-center justify-center transition-all"
+          style={{
+            background: enabled ? GRAD_CTA : 'rgba(255,255,255,0.06)',
+            border: enabled ? 'none' : '1px solid rgba(255,255,255,0.15)',
+          }}
         >
           {enabled && (
-            <svg className="w-3 h-3 text-doom-bg" fill="none" viewBox="0 0 12 12">
-              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           )}
         </button>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <span className="text-doom-text text-sm">{habit.label}</span>
-            <span className="text-doom-muted text-xs">{fmt(habit.monthlyAvg)}/mo</span>
+            <span className="text-white text-sm">{habit.label}</span>
+            <span className="text-white/40 text-xs">{fmt(habit.monthlyAvg)}/mo</span>
           </div>
           {enabled && (
             <div className="flex gap-3 mt-1">
-              <span className="text-doom-green text-xs">
-                → <strong>{fmtCompact(saved5yr)}</strong> in 5yr
+              <span className="text-emerald-400 text-xs">
+                → <strong>{fmtCompact(s5)}</strong> in 5yr
               </span>
-              <span className="text-doom-green text-xs">
-                → <strong>{fmtCompact(saved10yr)}</strong> in 10yr
+              <span className="text-emerald-400 text-xs">
+                → <strong>{fmtCompact(s10)}</strong> in 10yr
               </span>
             </div>
           )}
@@ -166,31 +156,7 @@ function WhatIfRow({ habit, enabled, onToggle }) {
   )
 }
 
-function WhatIfSummary({ habits, enabled }) {
-  const activeHabits = habits.filter(h => enabled.has(h.category))
-  const monthlyTotal = activeHabits.reduce((s, h) => s + h.monthlyAvg, 0)
-  const yearlyTotal = monthlyTotal * 12
-  const fv10 = futureValue(monthlyTotal, 10)
-
-  if (activeHabits.length === 0) return null
-
-  return (
-    <div className="mt-4 bg-[#0A1F10] border border-[#1A4D2A] rounded-2xl p-4">
-      <p className="text-doom-green font-semibold text-sm mb-1">
-        You'd keep {fmt(monthlyTotal)}/month
-      </p>
-      <p className="text-doom-green text-sm mb-2">
-        → {fmt(yearlyTotal)}/year saved
-      </p>
-      <p className="text-doom-text font-bold text-base">
-        → {fmtCompact(fv10)}
-        <span className="text-doom-muted font-normal text-sm"> invested over 10 years at 7%</span>
-      </p>
-    </div>
-  )
-}
-
-// ── Main Dashboard ───────────────────────────────────────────────
+// ── Main Dashboard ────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -216,151 +182,204 @@ export default function DashboardPage() {
   }
 
   const maxHabitAmount = Math.max(...habits.map(h => h.monthlyAvg), 1)
+  const activeHabits = habits.filter(h => enabledHabits.has(h.category))
+  const whatIfMonthly = activeHabits.reduce((s, h) => s + h.monthlyAvg, 0)
+  const whatIfFv10 = futureValue(whatIfMonthly, 10)
 
   return (
-    <div className="min-h-screen bg-doom-bg">
-      {/* Header bar */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-doom-border">
+    <div className="min-h-screen">
+
+      {/* ── Header ─────────────────────────────────────────────────── */}
+      <header
+        className="flex items-center justify-between px-6 py-4 border-b"
+        style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+      >
         <button
           onClick={() => navigate('/')}
-          className="text-doom-muted text-sm flex items-center gap-1"
+          className="text-white/40 text-sm flex items-center gap-1 transition-colors hover:text-white/70"
         >
           ← Back
         </button>
-        <span className="flex items-center gap-2 text-doom-text font-bold text-base">
-          <span>💸</span> Subscription Doom
-        </span>
-        <button className="text-doom-muted text-xl">⚙️</button>
+        <div className="flex items-center gap-2">
+          <div
+            className="w-6 h-6 rounded-lg flex items-center justify-center font-black text-white text-xs"
+            style={{ background: GRAD_CTA }}
+          >
+            $
+          </div>
+          <span className="text-white font-bold text-base">SubDoom</span>
+        </div>
+        {/* Settings icon */}
+        <button className="text-white/40 hover:text-white/70 transition-colors">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+          </svg>
+        </button>
       </header>
 
-      {/* Hero total */}
-      <TopHero summary={summary} />
+      {/* ── Hero total ─────────────────────────────────────────────── */}
+      <div
+        className="px-6 py-10 text-center"
+        style={{ background: 'linear-gradient(180deg, rgba(109,40,217,0.18) 0%, transparent 100%)' }}
+      >
+        <p className="text-white/50 text-sm mb-2 tracking-wide uppercase text-xs">Leaving your account</p>
+        <div className="flex items-baseline justify-center gap-2 mb-2">
+          <h1 className="text-6xl font-black text-white tracking-tight">
+            {fmt(summary.totalMonthly)}
+          </h1>
+          <span className="text-violet-400 text-xl font-semibold">/ mo</span>
+        </div>
+        <p className="text-white/50 text-base">
+          <span
+            className="font-black text-2xl"
+            style={{ background: GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+          >
+            {fmt(summary.totalYearly)}
+          </span>
+          {' '}per year
+        </p>
+      </div>
 
-      <div className="px-4 py-6 max-w-lg mx-auto space-y-8">
+      <div className="px-4 pb-6 max-w-lg mx-auto space-y-8">
 
-        {/* ── TOP LEAKS ─────────────────────────────── */}
+        {/* ── TOP LEAKS ────────────────────────────────────────────── */}
         <section>
-          <SectionHeader title="Your Top Leaks" onMore={() => {}} />
+          <div className="mb-4">
+            <h2 className="text-white font-bold text-base">Your Top Leaks</h2>
+            <p className="text-white/40 text-xs mt-0.5">Where the money actually goes</p>
+          </div>
           <div className="space-y-3">
-            {topLeaks.map((item, i) => (
-              <LeakCard key={item.merchant ?? item.category} item={item} rank={i + 1} />
+            {topLeaks.map(item => (
+              <LeakCard key={item.merchant ?? item.category} item={item} />
             ))}
           </div>
         </section>
 
-        {/* ── SUBSCRIPTIONS ─────────────────────────── */}
+        {/* ── SUBSCRIPTIONS ────────────────────────────────────────── */}
         <section>
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-doom-text font-bold text-base">Subscriptions</h2>
-            <span className="text-doom-muted text-xs">
-              {fmt(summary.subMonthly)}/mo total
-            </span>
+            <h2 className="text-white font-bold text-base">Subscriptions</h2>
+            <span className="text-white/40 text-xs">{fmt(summary.subMonthly)}/mo</span>
           </div>
-          <p className="text-doom-muted text-xs mb-4">
+          <p className="text-white/40 text-xs mb-4">
             {formatCurrency(summary.subMonthly * 12)} quietly leaving every year
           </p>
-          <div className="bg-doom-card border border-doom-border rounded-2xl px-4 divide-y divide-doom-border">
+          <div className="glass rounded-2xl px-4">
             {subscriptions.map(sub => (
               <SubscriptionRow key={sub.merchant} sub={sub} />
             ))}
           </div>
         </section>
 
-        {/* ── HABITS ────────────────────────────────── */}
+        {/* ── HABITS ───────────────────────────────────────────────── */}
         <section>
-          <SectionHeader
-            title="Habits"
-            subtitle="This is where it adds up"
-            onMore={() => {}}
-          />
-          <div className="bg-doom-card border border-doom-border rounded-2xl px-4">
-            {habits.map(habit => (
-              <HabitBar
-                key={habit.category}
-                habit={habit}
-                maxAmount={maxHabitAmount}
-              />
+          <div className="mb-4">
+            <h2 className="text-white font-bold text-base">Spending Habits</h2>
+            <p className="text-white/40 text-xs mt-0.5">This is where it really adds up</p>
+          </div>
+          <div className="glass rounded-2xl px-4">
+            {habits.map(h => (
+              <HabitBar key={h.category} habit={h} maxAmount={maxHabitAmount} />
             ))}
           </div>
         </section>
 
-        {/* ── INVESTMENT IMPACT ─────────────────────── */}
+        {/* ── INVESTMENT IMPACT ─────────────────────────────────────── */}
         <section>
           <div className="mb-4">
-            <h2 className="text-doom-text font-bold text-base">Investment Impact</h2>
-            <p className="text-doom-muted text-xs mt-0.5">If this money worked for you instead</p>
+            <h2 className="text-white font-bold text-base">Investment Impact</h2>
+            <p className="text-white/40 text-xs mt-0.5">If this money worked for you instead</p>
           </div>
           <div className="space-y-3">
-            {habits.slice(0, 4).map(habit => {
-              const fv10 = futureValue(habit.monthlyAvg, 10)
+            {habits.slice(0, 4).map(h => {
+              const fv10 = futureValue(h.monthlyAvg, 10)
               return (
-                <div
-                  key={habit.category}
-                  className="bg-doom-card border border-doom-border rounded-2xl p-4"
-                >
+                <div key={h.category} className="glass rounded-2xl p-4">
                   <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span>{habit.emoji}</span>
-                      <span className="text-doom-text text-sm font-semibold">{habit.label}</span>
+                    <div className="flex items-center gap-2.5">
+                      <CategoryIcon category={h.category} color={h.color} size={32} />
+                      <span className="text-white text-sm font-semibold">{h.label}</span>
                     </div>
-                    <span className="text-doom-muted text-xs">{fmt(habit.monthlyAvg)}/mo</span>
+                    <span className="text-white/40 text-xs">{fmt(h.monthlyAvg)}/mo</span>
                   </div>
-                  <div className="text-doom-muted text-xs mb-2">
-                    {fmt(habit.yearlyTotal)}/yr
+                  <p className="text-white/35 text-xs mb-3 ml-10">{fmt(h.yearlyTotal)}/yr</p>
+                  <div
+                    className="rounded-xl px-3.5 py-3"
+                    style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.12)' }}
+                  >
+                    <p className="text-white/40 text-xs mb-0.5">Invested at 7% for 10 years</p>
+                    <p className="text-emerald-400 font-black text-2xl">→ {fmtCompact(fv10)}</p>
                   </div>
-                  <div className="flex items-center gap-2 text-doom-green text-sm">
-                    <span>If invested at 7% for 10 years:</span>
-                  </div>
-                  <p className="text-doom-green font-bold text-xl mt-1">
-                    → {fmtCompact(fv10)}
-                  </p>
                 </div>
               )
             })}
           </div>
         </section>
 
-        {/* ── WHAT IF TOGGLE ────────────────────────── */}
+        {/* ── WHAT IF ───────────────────────────────────────────────── */}
         <section>
-          <div className="mb-4">
-            <h2 className="text-doom-text font-bold text-base">What If</h2>
-            <div className="flex items-center justify-between mt-0.5">
-              <p className="text-doom-muted text-xs">Toggle habits to see your savings</p>
-              <span className="text-doom-muted text-xs">
-                You keep{' '}
-                <span className="text-doom-gold font-semibold">
-                  {fmt(habits.filter(h => enabledHabits.has(h.category)).reduce((s, h) => s + h.monthlyAvg, 0))}
-                </span>
-                /month
-              </span>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-white font-bold text-base">What If</h2>
+              <p className="text-white/40 text-xs mt-0.5">Toggle habits to see your savings</p>
+            </div>
+            <div className="text-right">
+              <p className="text-white/40 text-xs">You keep</p>
+              <p
+                className="font-black text-sm"
+                style={{ background: GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+              >
+                {fmt(whatIfMonthly)}/mo
+              </p>
             </div>
           </div>
-          <div className="bg-doom-card border border-doom-border rounded-2xl px-4">
-            {habits.map(habit => (
+          <div className="glass rounded-2xl px-4 mb-4">
+            {habits.map(h => (
               <WhatIfRow
-                key={habit.category}
-                habit={habit}
-                enabled={enabledHabits.has(habit.category)}
+                key={h.category}
+                habit={h}
+                enabled={enabledHabits.has(h.category)}
                 onToggle={toggleHabit}
               />
             ))}
           </div>
-          <WhatIfSummary habits={habits} enabled={enabledHabits} />
+          {activeHabits.length > 0 && (
+            <div
+              className="rounded-2xl p-4"
+              style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.12)' }}
+            >
+              <p className="text-emerald-400 font-semibold text-sm mb-1">
+                You'd keep {fmt(whatIfMonthly)}/month
+              </p>
+              <p className="text-white/50 text-sm mb-2">
+                → {fmt(whatIfMonthly * 12)}/year freed up
+              </p>
+              <p className="text-white font-black text-2xl">
+                → {fmtCompact(whatIfFv10)}
+                <span className="text-white/40 font-normal text-sm"> in 10 years at 7%</span>
+              </p>
+            </div>
+          )}
         </section>
 
-        {/* ── FOOTER CTA ────────────────────────────── */}
-        <div className="bg-doom-card border border-doom-border rounded-2xl p-5 text-center">
-          <p className="text-doom-muted text-xs mb-2">Want alerts when spending spikes?</p>
-          <h3 className="text-doom-text font-bold text-lg mb-1">
-            Upgrade to Doom Pro
-          </h3>
-          <p className="text-doom-muted text-sm mb-4">
+        {/* ── FOOTER CTA ────────────────────────────────────────────── */}
+        <div className="glass rounded-2xl p-5 text-center">
+          <p className="text-white/40 text-xs mb-2">Want alerts when spending spikes?</p>
+          <h3 className="text-white font-black text-xl mb-1">Upgrade to Doom Pro</h3>
+          <p className="text-white/50 text-sm mb-5 leading-relaxed">
             Real-time alerts · Export reports · Deep insights · 12-month history
           </p>
-          <button className="w-full bg-doom-amber text-doom-bg font-bold py-3.5 rounded-xl text-sm">
+          <button
+            className="w-full text-white font-bold py-4 rounded-2xl text-sm transition-transform active:scale-95"
+            style={{
+              background: GRAD_CTA,
+              boxShadow: '0 8px 32px rgba(124,58,237,0.4)',
+            }}
+          >
             Start Free Trial
           </button>
-          <p className="text-doom-muted text-xs mt-3">Cancel anytime. No doom surprises.</p>
+          <p className="text-white/25 text-xs mt-3">Cancel anytime. No doom surprises.</p>
         </div>
 
         <div className="h-8" />

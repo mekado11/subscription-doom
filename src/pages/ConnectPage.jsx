@@ -2,54 +2,46 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const BANKS = [
-  { name: 'Chase', color: '#117ACA', initial: 'C' },
-  { name: 'Bank of America', color: '#E31837', initial: 'B' },
-  { name: 'Wells Fargo', color: '#D71E2B', initial: 'W' },
-  { name: 'Citi', color: '#0066CC', initial: 'C' },
-  { name: 'Capital One', color: '#C41230', initial: 'C' },
-  { name: 'American Express', color: '#2E77BC', initial: 'A' },
+  { name: 'Chase',        color: '#117ACA', letter: 'C' },
+  { name: 'BofA',         color: '#E31837', letter: 'B' },
+  { name: 'Wells Fargo',  color: '#D71E2B', letter: 'W' },
+  { name: 'Citi',         color: '#0066CC', letter: 'C' },
+  { name: 'Capital One',  color: '#C41230', letter: 'C' },
+  { name: 'Amex',         color: '#2E77BC', letter: 'A' },
 ]
 
-const LEAKS = [
-  { label: 'Netflix', amount: '$15/mo', color: '#E50914' },
-  { label: 'Coffee runs', amount: '$120/mo', color: '#C4831A' },
-  { label: 'Eating out', amount: '$480/mo', color: '#E05252' },
+const SCAN_STEPS = [
+  'Reading transactions...',
+  'Detecting subscriptions...',
+  'Analyzing spending habits...',
+  'Calculating your leaks...',
+  'Building your dashboard...',
 ]
 
-function AnimatedCounter({ value, prefix = '$' }) {
-  return (
-    <span>
-      {prefix}{value.toLocaleString()}
-    </span>
-  )
-}
+const LEAKS_PREVIEW = [
+  { label: 'Shopping',      amount: '$468/mo', color: '#A78BFA' },
+  { label: 'Eating Out',    amount: '$448/mo', color: '#F87171' },
+  { label: 'Food Delivery', amount: '$304/mo', color: '#34D399' },
+]
 
 export default function ConnectPage() {
   const navigate = useNavigate()
-  const [step, setStep] = useState('landing') // 'landing' | 'connecting' | 'scanning'
+  const [step, setStep] = useState('landing')
   const [progress, setProgress] = useState(0)
-  const [scanLabel, setScanLabel] = useState('Reading transactions...')
-
-  const SCAN_STEPS = [
-    'Reading transactions...',
-    'Detecting subscriptions...',
-    'Analyzing spending habits...',
-    'Calculating your leaks...',
-    'Building your dashboard...',
-  ]
+  const [scanLabel, setScanLabel] = useState(SCAN_STEPS[0])
+  const [scanLeaksVisible, setScanLeaksVisible] = useState(0)
 
   function handleDemoConnect() {
     setStep('connecting')
-
     setTimeout(() => {
       setStep('scanning')
       let stepIdx = 0
-
       const interval = setInterval(() => {
         stepIdx++
-        setProgress(Math.min((stepIdx / SCAN_STEPS.length) * 100, 95))
+        const prog = Math.min((stepIdx / SCAN_STEPS.length) * 100, 95)
+        setProgress(prog)
         setScanLabel(SCAN_STEPS[Math.min(stepIdx, SCAN_STEPS.length - 1)])
-
+        setScanLeaksVisible(Math.ceil((prog / 100) * LEAKS_PREVIEW.length))
         if (stepIdx >= SCAN_STEPS.length) {
           clearInterval(interval)
           setProgress(100)
@@ -59,47 +51,79 @@ export default function ConnectPage() {
     }, 800)
   }
 
+  // ── Connecting state ──────────────────────────────────────────────────────
   if (step === 'connecting') {
     return (
-      <div className="min-h-screen bg-doom-bg flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-doom-amber flex items-center justify-center mx-auto mb-6 animate-pulse">
-            <span className="text-2xl">🏦</span>
+          <div
+            className="w-20 h-20 rounded-3xl mx-auto mb-6 flex items-center justify-center animate-pulse"
+            style={{
+              background: 'linear-gradient(135deg, #7C3AED, #EC4899)',
+              boxShadow: '0 0 50px rgba(124,58,237,0.5)',
+            }}
+          >
+            {/* Lock SVG */}
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
           </div>
-          <p className="text-doom-text text-lg font-semibold">Connecting securely...</p>
-          <p className="text-doom-muted text-sm mt-2">Bank-level 256-bit encryption</p>
+          <p className="text-white text-xl font-bold mb-2">Connecting securely</p>
+          <p className="text-white/50 text-sm">Bank-level 256-bit encryption</p>
         </div>
       </div>
     )
   }
 
+  // ── Scanning state ────────────────────────────────────────────────────────
   if (step === 'scanning') {
     return (
-      <div className="min-h-screen bg-doom-bg flex items-center justify-center p-6">
-        <div className="w-full max-w-sm text-center">
-          <div className="text-4xl mb-6">🔍</div>
-          <h2 className="text-doom-text text-xl font-bold mb-2">Scanning your accounts</h2>
-          <p className="text-doom-muted text-sm mb-8">6 months of transactions</p>
-
-          {/* Progress bar */}
-          <div className="h-1.5 bg-doom-border rounded-full overflow-hidden mb-4">
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
             <div
-              className="h-full bg-doom-amber rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
+              className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center"
+              style={{
+                background: 'rgba(139,92,246,0.15)',
+                border: '1px solid rgba(139,92,246,0.3)',
+              }}
+            >
+              {/* Search SVG */}
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </div>
+            <h2 className="text-white text-2xl font-bold mb-1">Scanning your accounts</h2>
+            <p className="text-white/50 text-sm">6 months of transactions</p>
           </div>
 
-          <p className="text-doom-muted text-sm">{scanLabel}</p>
+          {/* Progress bar */}
+          <div
+            className="rounded-full overflow-hidden mb-3"
+            style={{ height: 4, background: 'rgba(255,255,255,0.08)' }}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${progress}%`,
+                background: 'linear-gradient(90deg, #7C3AED, #EC4899)',
+              }}
+            />
+          </div>
+          <p className="text-white/40 text-sm text-center mb-8">{scanLabel}</p>
 
           {/* Animated leak previews */}
-          <div className="mt-10 space-y-3">
-            {LEAKS.slice(0, Math.ceil((progress / 100) * LEAKS.length)).map((leak) => (
+          <div className="space-y-3">
+            {LEAKS_PREVIEW.slice(0, scanLeaksVisible).map(leak => (
               <div
                 key={leak.label}
-                className="flex items-center justify-between bg-doom-card border border-doom-border rounded-xl px-4 py-3 text-left animate-[fadeIn_0.4s_ease]"
+                className="glass rounded-2xl px-4 py-3 flex items-center justify-between"
+                style={{ animation: 'fadeUp 0.4s ease forwards' }}
               >
-                <span className="text-doom-text text-sm">{leak.label}</span>
-                <span className="text-doom-amber font-semibold text-sm">{leak.amount}</span>
+                <span className="text-white/80 text-sm font-medium">{leak.label}</span>
+                <span className="font-bold text-sm" style={{ color: leak.color }}>{leak.amount}</span>
               </div>
             ))}
           </div>
@@ -108,78 +132,109 @@ export default function ConnectPage() {
     )
   }
 
-  // Landing page
+  // ── Landing ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-doom-bg flex flex-col">
+    <div className="min-h-screen flex flex-col">
+
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">💸</span>
-          <span className="text-doom-text font-bold text-lg tracking-tight">Subscription Doom</span>
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-white text-sm"
+            style={{ background: 'linear-gradient(135deg, #7C3AED, #EC4899)' }}
+          >
+            $
+          </div>
+          <span className="text-white font-bold text-lg tracking-tight">SubDoom</span>
         </div>
-        <span className="text-xs text-doom-muted bg-doom-card border border-doom-border px-3 py-1 rounded-full">
-          Demo Mode
-        </span>
+        <span className="text-xs text-white/40 glass rounded-full px-3 py-1.5">Demo</span>
       </header>
 
       {/* Hero */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 pb-10 text-center">
-        {/* Big number teaser */}
-        <div className="mb-8 bg-doom-card border border-doom-border rounded-3xl px-8 py-6 max-w-xs w-full">
-          <p className="text-doom-muted text-sm mb-1">Average person leaks</p>
-          <p className="text-doom-amber text-5xl font-bold tracking-tight">
-            <AnimatedCounter value={25680} />
+
+        {/* Leak number teaser */}
+        <div className="glass rounded-3xl px-8 py-7 max-w-xs w-full mb-8">
+          <p className="text-white/50 text-sm mb-2">The average person leaks</p>
+          <p
+            className="text-5xl font-black mb-1 tracking-tight"
+            style={{
+              background: 'linear-gradient(135deg, #A78BFA, #F472B6)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            $25,680
           </p>
-          <p className="text-doom-muted text-sm mt-1">per year without noticing</p>
+          <p className="text-white/40 text-sm">per year without noticing</p>
         </div>
 
-        {/* Headline */}
-        <h1 className="text-doom-text text-3xl font-bold leading-tight mb-3 max-w-xs">
-          See exactly where your money disappears
+        <h1 className="text-white text-3xl font-black leading-tight mb-3 max-w-xs">
+          See exactly where your money{' '}
+          <span
+            style={{
+              background: 'linear-gradient(135deg, #A78BFA, #F472B6)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            disappears
+          </span>
         </h1>
-        <p className="text-doom-muted text-base max-w-xs leading-relaxed mb-10">
-          We scan your last 6 months and show you every subscription, habit, and money leak — in 60 seconds.
+        <p className="text-white/50 text-base max-w-xs leading-relaxed mb-10">
+          We scan your last 6 months and expose every subscription, habit, and money leak — in 60 seconds.
         </p>
 
-        {/* CTA */}
+        {/* Primary CTA */}
         <button
           onClick={handleDemoConnect}
-          className="w-full max-w-xs bg-doom-amber text-doom-bg font-bold text-base py-4 rounded-2xl mb-4 active:scale-95 transition-transform"
+          className="w-full max-w-xs text-white font-bold text-base py-4 rounded-2xl mb-3.5 transition-transform active:scale-95"
+          style={{
+            background: 'linear-gradient(135deg, #7C3AED, #EC4899)',
+            boxShadow: '0 8px 32px rgba(124,58,237,0.45)',
+          }}
         >
           Connect Your Bank
         </button>
 
+        {/* Secondary CTA */}
         <button
           onClick={handleDemoConnect}
-          className="w-full max-w-xs bg-doom-card border border-doom-border text-doom-text font-semibold text-base py-4 rounded-2xl active:scale-95 transition-transform"
+          className="w-full max-w-xs text-white/80 font-semibold text-base py-4 rounded-2xl glass transition-transform active:scale-95"
         >
           Try with Demo Data
         </button>
 
-        <p className="text-doom-muted text-xs mt-5 max-w-xs">
-          Secured by Plaid. Read-only access. We never store your credentials.
+        <p className="text-white/30 text-xs mt-6 max-w-xs leading-relaxed">
+          Secured by Plaid · Read-only access · We never store your credentials
         </p>
 
-        {/* Trust badges */}
-        <div className="flex items-center gap-6 mt-8">
-          {['🔒 Bank-grade security', '👁️ Read-only', '🚫 No sharing'].map(b => (
-            <span key={b} className="text-doom-muted text-xs">{b}</span>
+        {/* Trust row */}
+        <div className="flex items-center gap-5 mt-7">
+          {['Bank-grade security', 'Read-only', 'No data selling'].map(b => (
+            <span key={b} className="text-white/30 text-xs">{b}</span>
           ))}
         </div>
       </main>
 
       {/* Bank logos strip */}
-      <div className="px-6 pb-8">
-        <p className="text-doom-muted text-xs text-center mb-4">Works with 10,000+ banks</p>
-        <div className="flex items-center justify-center gap-3 flex-wrap">
+      <div className="px-6 pb-10">
+        <p className="text-white/25 text-xs text-center mb-4">Works with 10,000+ banks</p>
+        <div className="flex items-center justify-center gap-3">
           {BANKS.map(bank => (
             <div
               key={bank.name}
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold"
-              style={{ backgroundColor: bank.color }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold"
+              style={{
+                background: bank.color + '18',
+                border: `1px solid ${bank.color}44`,
+                color: bank.color,
+              }}
               title={bank.name}
             >
-              {bank.initial}
+              {bank.letter}
             </div>
           ))}
         </div>

@@ -16,22 +16,24 @@ const HABIT_CATEGORIES = new Set([
   'Shopping',
 ])
 
+// Updated palette to match glassmorphism design
 const CATEGORY_META = {
-  'Coffee Shops':  { label: 'Coffee',        emoji: '☕', color: '#C4831A' },
-  'Restaurants':   { label: 'Eating Out',     emoji: '🍔', color: '#E05252' },
-  'Bars & Alcohol':{ label: 'Alcohol',        emoji: '🍷', color: '#9B4DCA' },
-  'Food Delivery': { label: 'Food Delivery',  emoji: '🛵', color: '#F5A623' },
-  'Rideshare':     { label: 'Rideshare',      emoji: '🚗', color: '#4A90D9' },
-  'Shopping':      { label: 'Shopping',       emoji: '🛍️', color: '#4CAF7D' },
+  'Coffee Shops':   { label: 'Coffee',       color: '#FBBF24' },
+  'Restaurants':    { label: 'Eating Out',    color: '#F87171' },
+  'Bars & Alcohol': { label: 'Alcohol',       color: '#C084FC' },
+  'Food Delivery':  { label: 'Food Delivery', color: '#34D399' },
+  'Rideshare':      { label: 'Rideshare',     color: '#60A5FA' },
+  'Shopping':       { label: 'Shopping',      color: '#A78BFA' },
 }
 
+// Letter-avatar metadata for subscription brands
 const SUB_META = {
-  'Netflix':              { emoji: '🎬', color: '#E50914' },
-  'Spotify':              { emoji: '🎵', color: '#1DB954' },
-  'Adobe Creative Cloud': { emoji: '🎨', color: '#FF0000' },
-  'Gym & Fitness':        { emoji: '💪', color: '#F5A623' },
-  'iCloud Storage':       { emoji: '☁️', color: '#4A90D9' },
-  'YouTube Premium':      { emoji: '▶️', color: '#FF0000' },
+  'Netflix':              { letter: 'N',  color: '#E50914' },
+  'Spotify':              { letter: 'S',  color: '#1DB954' },
+  'Adobe Creative Cloud': { letter: 'Ac', color: '#FF4500' },
+  'Gym & Fitness':        { letter: 'Gm', color: '#F59E0B' },
+  'iCloud Storage':       { letter: 'iC', color: '#3B82F6' },
+  'YouTube Premium':      { letter: 'YT', color: '#FF0000' },
 }
 
 /**
@@ -50,7 +52,6 @@ function detectSubscriptions(transactions) {
   const subscriptions = []
 
   for (const [key, txns] of Object.entries(byMerchant)) {
-    // Sort by date
     txns.sort((a, b) => new Date(a.date) - new Date(b.date))
 
     const isNamedSub = [...SUBSCRIPTION_MERCHANTS].some(s => key.includes(s))
@@ -58,7 +59,6 @@ function detectSubscriptions(transactions) {
     const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length
     const allSimilarAmount = amounts.every(a => Math.abs(a - avgAmount) / avgAmount < 0.1)
 
-    // Check monthly interval
     let isRecurring = false
     if (txns.length >= 2) {
       const gaps = []
@@ -72,10 +72,11 @@ function detectSubscriptions(transactions) {
 
     if (isNamedSub || (allSimilarAmount && isRecurring)) {
       const merchant = txns[0].merchant
+      const meta = SUB_META[merchant]
       subscriptions.push({
         merchant,
-        emoji: SUB_META[merchant]?.emoji ?? '📦',
-        color: SUB_META[merchant]?.color ?? '#8A7D68',
+        letter: meta?.letter ?? merchant[0].toUpperCase(),
+        color: meta?.color ?? '#8B5CF6',
         monthlyAvg: +avgAmount.toFixed(2),
         yearlyTotal: +(avgAmount * 12).toFixed(2),
         txnCount: txns.length,
@@ -103,15 +104,14 @@ function detectHabits(transactions) {
 
   for (const [category, txns] of Object.entries(byCategory)) {
     const totalSpend = txns.reduce((s, t) => s + t.amount, 0)
-    const monthCount = 6 // we pull 6 months
+    const monthCount = 6
     const monthlyAvg = totalSpend / monthCount
     const meta = CATEGORY_META[category]
 
     habits.push({
       category,
       label: meta?.label ?? category,
-      emoji: meta?.emoji ?? '💸',
-      color: meta?.color ?? '#8A7D68',
+      color: meta?.color ?? '#8B5CF6',
       monthlyAvg: +monthlyAvg.toFixed(2),
       yearlyTotal: +(monthlyAvg * 12).toFixed(2),
       txnCount: txns.length,
@@ -136,7 +136,6 @@ export function analyzeTransactions(transactions) {
   const habitMonthly = habits.reduce((s, x) => s + x.monthlyAvg, 0)
   const totalMonthly = subMonthly + habitMonthly
 
-  // Top leaks = all items sorted by monthly spend
   const allItems = [...subscriptions, ...habits]
   const topLeaks = [...allItems].sort((a, b) => b.monthlyAvg - a.monthlyAvg).slice(0, 3)
 
