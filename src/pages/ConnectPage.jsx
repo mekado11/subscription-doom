@@ -1,6 +1,115 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+// ── Bank logos strip — matches the reference design ──────────────────────────
+
+const BANKS = [
+  {
+    name: 'CHASE',
+    color: '#117ACA',
+    icon: (
+      // Chase octagon shield (simplified)
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <path d="M14 1L25 6V14C25 20.075 20.075 26 14 27C7.925 26 3 20.075 3 14V6L14 1Z" fill="#117ACA"/>
+        <rect x="9" y="14" width="5" height="5" fill="white"/>
+        <rect x="14" y="9" width="5" height="5" fill="white"/>
+        <rect x="9" y="9" width="5" height="5" fill="white" opacity="0.4"/>
+        <rect x="14" y="14" width="5" height="5" fill="white" opacity="0.4"/>
+      </svg>
+    ),
+  },
+  {
+    name: 'BANK OF\nAMERICA',
+    color: '#E31837',
+    icon: (
+      // BofA flag — diagonal stripes
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="4" fill="#E31837"/>
+        <line x1="4" y1="24" x2="14" y2="4"  stroke="white" strokeWidth="3" strokeLinecap="round"/>
+        <line x1="10" y1="24" x2="20" y2="4" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+        <line x1="16" y1="24" x2="26" y2="4" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
+    name: 'WELLS\nFARGO',
+    color: '#ffffff',
+    icon: (
+      // Wells Fargo — red box with yellow bar
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="4" fill="#C8102E"/>
+        <rect y="20" width="28" height="8" rx="0" fill="#FFCD00"/>
+        <text x="14" y="16" textAnchor="middle" fill="white" fontSize="7" fontWeight="bold" fontFamily="sans-serif">WELLS</text>
+        <text x="14" y="23" textAnchor="middle" fill="#C8102E" fontSize="6" fontWeight="bold" fontFamily="sans-serif">FARGO</text>
+      </svg>
+    ),
+  },
+  {
+    name: 'citi',
+    color: '#0066CC',
+    icon: (
+      // Citi — blue text + red arc
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <text x="14" y="17" textAnchor="middle" fill="#0066CC" fontSize="11" fontWeight="bold" fontFamily="sans-serif" letterSpacing="-0.5">citi</text>
+        <path d="M9 8 Q14 4 19 8" stroke="#E31837" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
+    name: 'US BANK',
+    color: '#E31837',
+    icon: (
+      // US Bank — red text logo
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <text x="14" y="13" textAnchor="middle" fill="#E31837" fontSize="9" fontWeight="bold" fontFamily="sans-serif">us</text>
+        <text x="14" y="22" textAnchor="middle" fill="#E31837" fontSize="7.5" fontWeight="bold" fontFamily="sans-serif">bank.</text>
+      </svg>
+    ),
+  },
+  {
+    name: 'PNC\nBANK',
+    color: '#F58025',
+    icon: (
+      // PNC — orange chevron
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <polygon points="4,8 14,4 24,8 20,20 14,24 8,20" fill="none" stroke="#F58025" strokeWidth="2.5"/>
+        <polygon points="10,12 14,10 18,12 16,18 14,20 12,18" fill="#F58025"/>
+      </svg>
+    ),
+  },
+]
+
+function BankLogosStrip() {
+  return (
+    <div
+      className="max-w-sm mx-auto rounded-2xl overflow-hidden"
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.1)',
+      }}
+    >
+      <div className="flex items-stretch">
+        {BANKS.map((bank, i) => (
+          <div key={bank.name} className="flex items-stretch" style={{ flex: 1 }}>
+            <div className="flex flex-col items-center justify-center gap-1.5 py-4 px-1 w-full">
+              {bank.icon}
+              <span
+                className="text-center leading-tight font-semibold"
+                style={{ fontSize: 8, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-line' }}
+              >
+                {bank.name}
+              </span>
+            </div>
+            {i < BANKS.length - 1 && (
+              <div style={{ width: 1, background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const SCAN_STEPS = [
   'Reading transactions...',
   'Detecting subscriptions...',
@@ -195,15 +304,9 @@ export default function ConnectPage() {
         </button>
       </main>
 
-      {/* Bank logos banner — drop banks.png into public/ folder */}
+      {/* Bank logos strip — inline, no image file needed */}
       <div className="px-4 pb-8">
-        <img
-          src="/banks.png"
-          alt="Works with Chase, Bank of America, Wells Fargo, Citi, US Bank, PNC and more"
-          className="w-full max-w-sm mx-auto block rounded-2xl"
-          style={{ opacity: 0.9 }}
-          onError={e => { e.currentTarget.style.display = 'none' }}
-        />
+        <BankLogosStrip />
       </div>
 
     </div>
