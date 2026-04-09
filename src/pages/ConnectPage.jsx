@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -137,6 +137,11 @@ export default function ConnectPage({ scanning = false }) {
   const [scanLabel, setScanLabel] = useState(SCAN_STEPS[0])
   const [scanLeaksVisible, setScanLeaksVisible] = useState(0)
 
+  // Auto-start scan when arriving via /connect route
+  useEffect(() => {
+    if (scanning) startScan()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Landing CTA — gate behind auth
   function handleCTA() {
     if (!isAuthed) {
@@ -185,7 +190,13 @@ export default function ConnectPage({ scanning = false }) {
             </svg>
           </div>
           <p className="text-white text-xl font-bold mb-2">Connecting securely</p>
-          <p className="text-white/50 text-sm">Bank-level 256-bit encryption</p>
+          <p className="text-white/50 text-sm mb-6">Bank-level 256-bit encryption · Read-only</p>
+          <button
+            onClick={() => navigate('/manual-entry')}
+            className="text-white/35 text-xs underline underline-offset-2"
+          >
+            My bank isn't listed — enter manually
+          </button>
         </div>
       </div>
     )
@@ -307,17 +318,9 @@ export default function ConnectPage({ scanning = false }) {
         </button>
 
         {/* Trust text */}
-        <p className="text-white/35 text-xs mb-2">
-          Secured by Plaid · Read-only · No data selling
+        <p className="text-white/35 text-xs mb-8">
+          Free · Takes 60 seconds · Read-only access
         </p>
-
-        {/* Manual entry fallback */}
-        <button
-          onClick={() => navigate('/manual-entry')}
-          className="text-white/40 text-xs underline underline-offset-2 mb-8"
-        >
-          My bank isn't listed — enter manually
-        </button>
       </main>
 
       {/* Bank logos strip — inline, no image file needed */}
