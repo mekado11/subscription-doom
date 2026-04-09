@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import BottomNav from '../components/BottomNav'
 
 const CATEGORIES = [
   'Coffee Shops',
@@ -378,8 +379,8 @@ export default function ManualEntryPage() {
           </div>
         )}
 
-        <div className="h-8" />
       </div>
+      <BottomNav />
     </div>
   )
 }

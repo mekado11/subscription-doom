@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import BottomNav from '../components/BottomNav'
 
 const GRAD = 'linear-gradient(135deg, #7C3AED, #EC4899)'
 
@@ -58,8 +60,9 @@ function Row({ icon, label, value, chevron = false, danger = false, onClick, chi
 
 export default function ProfilePage() {
   const navigate = useNavigate()
+  const { user, signOut } = useAuth()
 
-  const [name, setName] = useState('Your Name')
+  const [name, setName] = useState(user?.name ?? 'Your Name')
   const [editingName, setEditingName] = useState(false)
   const [budget, setBudget] = useState(2000)
 
@@ -119,6 +122,9 @@ export default function ProfilePage() {
             </button>
           )}
           <p className="text-white/40 text-xs">Tap name to edit</p>
+          {user?.email && (
+            <p className="text-white/30 text-xs mt-0.5">{user.email}</p>
+          )}
         </div>
 
         {/* Connected Accounts */}
@@ -293,13 +299,15 @@ export default function ProfilePage() {
 
         {/* Sign out */}
         <button
-          className="w-full glass rounded-2xl py-4 text-white/60 font-semibold text-sm mb-8"
+          onClick={() => { signOut(); navigate('/') }}
+          className="w-full glass rounded-2xl py-4 text-white/60 font-semibold text-sm mb-4"
         >
           Sign Out
         </button>
 
-        <p className="text-white/20 text-xs text-center mb-4">SubDoom v0.1 · Free Beta</p>
+        <p className="text-white/20 text-xs text-center mb-2">SubDoom v0.1 · Free Beta</p>
       </div>
+      <BottomNav />
     </div>
   )
 }

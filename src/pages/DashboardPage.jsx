@@ -4,6 +4,7 @@ import { generateMockTransactions } from '../utils/mockTransactions'
 import { analyzeTransactions } from '../utils/analyzer'
 import { futureValue, formatCurrency } from '../utils/calculator'
 import { CategoryIcon, BrandAvatar } from '../components/Icons'
+import BottomNav from '../components/BottomNav'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -382,8 +383,8 @@ export default function DashboardPage() {
           <p className="text-white/25 text-xs mt-3">Cancel anytime. No doom surprises.</p>
         </div>
 
-        <div className="h-8" />
       </div>
+      <BottomNav />
     </div>
   )
 }

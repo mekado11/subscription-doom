@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 // ── Bank logos strip — matches the reference design ──────────────────────────
 
@@ -124,14 +125,28 @@ const LEAKS_PREVIEW = [
   { label: 'Food Delivery', amount: '$304/mo', color: '#34D399' },
 ]
 
-export default function ConnectPage() {
+// ConnectPage serves two roles:
+//   1. Landing (public, prop `scanning` absent) — pitch + CTA → /auth
+//   2. Scan flow (protected, prop `scanning` present) — connecting → scanning → dashboard
+export default function ConnectPage({ scanning = false }) {
   const navigate = useNavigate()
-  const [step, setStep] = useState('landing')
+  const { isAuthed, markScanned } = useAuth()
+  // If opened as the scan flow, skip straight to connecting
+  const [step, setStep] = useState(scanning ? 'connecting' : 'landing')
   const [progress, setProgress] = useState(0)
   const [scanLabel, setScanLabel] = useState(SCAN_STEPS[0])
   const [scanLeaksVisible, setScanLeaksVisible] = useState(0)
 
-  function handleDemoConnect() {
+  // Landing CTA — gate behind auth
+  function handleCTA() {
+    if (!isAuthed) {
+      navigate('/auth')
+      return
+    }
+    startScan()
+  }
+
+  function startScan() {
     setStep('connecting')
     setTimeout(() => {
       setStep('scanning')
@@ -145,6 +160,7 @@ export default function ConnectPage() {
         if (stepIdx >= SCAN_STEPS.length) {
           clearInterval(interval)
           setProgress(100)
+          markScanned?.()
           setTimeout(() => navigate('/dashboard'), 400)
         }
       }, 600)
@@ -280,7 +296,7 @@ export default function ConnectPage() {
 
         {/* Primary CTA */}
         <button
-          onClick={handleDemoConnect}
+          onClick={handleCTA}
           className="w-full max-w-xs text-white font-bold text-base py-4 rounded-2xl mb-4 transition-transform active:scale-95"
           style={{
             background: 'linear-gradient(135deg, #7C3AED, #EC4899)',
