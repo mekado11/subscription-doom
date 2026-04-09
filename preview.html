@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Subscription Doom – Preview</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          doom: {
+            bg: '#0D0A06',
+            card: '#141009',
+            cardHover: '#1C160C',
+            border: '#2A200E',
+            amber: '#F5A623',
+            amberDim: '#C4831A',
+            gold: '#E8C87A',
+            text: '#F0EBE0',
+            muted: '#8A7D68',
+            red: '#E05252',
+            green: '#4CAF7D',
+          },
+        },
+      },
+    },
+  }
+</script>
+<style>
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.4s ease forwards; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+  .pulse { animation: pulse 1.5s ease-in-out infinite; }
+</style>
+</head>
+<body class="bg-doom-bg text-doom-text font-sans">
+
+<div id="app"></div>
+
+<script>
+// ─── Utils ────────────────────────────────────────────────────────────────────
+
+function futureValue(monthlyAmount, years = 10, annualRate = 0.07) {
+  if (monthlyAmount <= 0) return 0;
+  const r = annualRate / 12;
+  const n = years * 12;
+  return Math.round(monthlyAmount * ((Math.pow(1 + r, n) - 1) / r));
+}
+
+function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+function fmtCompact(n) { return n >= 1000 ? '$' + Math.round(n / 1000) + 'k' : '$' + Math.round(n); }
+function formatCurrency(n) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n); }
+
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+
+const SUBSCRIPTIONS = [
+  { merchant: 'Adobe Creative Cloud', emoji: '🎨', color: '#FF0000', monthlyAvg: 59.99, yearlyTotal: 719.88 },
+  { merchant: 'Gym & Fitness',        emoji: '💪', color: '#F5A623', monthlyAvg: 40.00, yearlyTotal: 480.00 },
+  { merchant: 'Netflix',              emoji: '🎬', color: '#E50914', monthlyAvg: 15.49, yearlyTotal: 185.88 },
+  { merchant: 'YouTube Premium',      emoji: '▶️', color: '#FF0000', monthlyAvg: 13.99, yearlyTotal: 167.88 },
+  { merchant: 'Spotify',              emoji: '🎵', color: '#1DB954', monthlyAvg: 10.99, yearlyTotal: 131.88 },
+  { merchant: 'iCloud Storage',       emoji: '☁️', color: '#4A90D9', monthlyAvg: 2.99,  yearlyTotal:  35.88 },
+];
+
+const HABITS = [
+  { category: 'Restaurants',   label: 'Eating Out',   emoji: '🍔', color: '#E05252', monthlyAvg: 448, yearlyTotal: 5376 },
+  { category: 'Food Delivery', label: 'Food Delivery',emoji: '🛵', color: '#F5A623', monthlyAvg: 304, yearlyTotal: 3648 },
+  { category: 'Shopping',      label: 'Shopping',     emoji: '🛍️', color: '#4CAF7D', monthlyAvg: 468, yearlyTotal: 5616 },
+  { category: 'Coffee Shops',  label: 'Coffee',       emoji: '☕', color: '#C4831A', monthlyAvg: 117, yearlyTotal: 1404 },
+  { category: 'Bars & Alcohol',label: 'Alcohol',      emoji: '🍷', color: '#9B4DCA', monthlyAvg: 168, yearlyTotal: 2016 },
+  { category: 'Rideshare',     label: 'Rideshare',    emoji: '🚗', color: '#4A90D9', monthlyAvg: 132, yearlyTotal: 1584 },
+];
+
+const subMonthly = SUBSCRIPTIONS.reduce((s, x) => s + x.monthlyAvg, 0);
+const habitMonthly = HABITS.reduce((s, x) => s + x.monthlyAvg, 0);
+const totalMonthly = subMonthly + habitMonthly;
+const totalYearly = totalMonthly * 12;
+
+const ALL_ITEMS = [...SUBSCRIPTIONS.map(s=>({...s,type:'subscription'})), ...HABITS.map(h=>({...h,type:'habit'}))];
+const TOP_LEAKS = [...ALL_ITEMS].sort((a,b) => b.monthlyAvg - a.monthlyAvg).slice(0, 3);
+
+const BANKS = [
+  { name: 'Chase', color: '#117ACA', initial: 'C' },
+  { name: 'Bank of America', color: '#E31837', initial: 'B' },
+  { name: 'Wells Fargo', color: '#D71E2B', initial: 'W' },
+  { name: 'Citi', color: '#0066CC', initial: 'C' },
+  { name: 'Capital One', color: '#C41230', initial: 'C' },
+  { name: 'American Express', color: '#2E77BC', initial: 'A' },
+];
+
+const SCAN_STEPS = [
+  'Reading transactions...',
+  'Detecting subscriptions...',
+  'Analyzing spending habits...',
+  'Calculating your leaks...',
+  'Building your dashboard...',
+];
+
+const LEAKS_PREVIEW = [
+  { label: 'Netflix', amount: '$15/mo', color: '#E50914' },
+  { label: 'Coffee runs', amount: '$120/mo', color: '#C4831A' },
+  { label: 'Eating out', amount: '$480/mo', color: '#E05252' },
+];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+
+let state = {
+  page: 'landing', // landing | connecting | scanning | dashboard
+  scanProgress: 0,
+  scanLabel: 'Reading transactions...',
+  scanLeaksVisible: 0,
+  enabledHabits: new Set(HABITS.map(h => h.category)),
+};
+
+function setState(patch) {
+  Object.assign(state, patch);
+  render();
+}
+
+// ─── Pages ────────────────────────────────────────────────────────────────────
+
+function renderLanding() {
+  return `
+    <div class="min-h-screen bg-doom-bg flex flex-col">
+      <header class="flex items-center justify-between px-6 py-5">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">💸</span>
+          <span class="text-doom-text font-bold text-lg tracking-tight">Subscription Doom</span>
+        </div>
+        <span class="text-xs text-doom-muted bg-doom-card border border-doom-border px-3 py-1 rounded-full">
+          Demo Mode
+        </span>
+      </header>
+
+      <main class="flex-1 flex flex-col items-center justify-center px-6 pb-10 text-center">
+        <div class="mb-8 bg-doom-card border border-doom-border rounded-3xl px-8 py-6 max-w-xs w-full">
+          <p class="text-doom-muted text-sm mb-1">Average person leaks</p>
+          <p class="text-doom-amber text-5xl font-bold tracking-tight">$25,680</p>
+          <p class="text-doom-muted text-sm mt-1">per year without noticing</p>
+        </div>
+
+        <h1 class="text-doom-text text-3xl font-bold leading-tight mb-3 max-w-xs">
+          See exactly where your money disappears
+        </h1>
+        <p class="text-doom-muted text-base max-w-xs leading-relaxed mb-10">
+          We scan your last 6 months and show you every subscription, habit, and money leak — in 60 seconds.
+        </p>
+
+        <button onclick="startDemo()"
+          class="w-full max-w-xs bg-doom-amber text-doom-bg font-bold text-base py-4 rounded-2xl mb-4 active:scale-95 transition-transform">
+          Connect Your Bank
+        </button>
+        <button onclick="startDemo()"
+          class="w-full max-w-xs bg-doom-card border border-doom-border text-doom-text font-semibold text-base py-4 rounded-2xl active:scale-95 transition-transform">
+          Try with Demo Data
+        </button>
+
+        <p class="text-doom-muted text-xs mt-5 max-w-xs">
+          Secured by Plaid. Read-only access. We never store your credentials.
+        </p>
+
+        <div class="flex items-center gap-6 mt-8">
+          ${['🔒 Bank-grade security', '👁️ Read-only', '🚫 No sharing'].map(b =>
+            `<span class="text-doom-muted text-xs">${b}</span>`).join('')}
+        </div>
+      </main>
+
+      <div class="px-6 pb-8">
+        <p class="text-doom-muted text-xs text-center mb-4">Works with 10,000+ banks</p>
+        <div class="flex items-center justify-center gap-3 flex-wrap">
+          ${BANKS.map(b => `
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold"
+              style="background-color:${b.color}" title="${b.name}">${b.initial}</div>
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderConnecting() {
+  return `
+    <div class="min-h-screen bg-doom-bg flex items-center justify-center p-6">
+      <div class="text-center">
+        <div class="w-16 h-16 rounded-2xl bg-doom-amber flex items-center justify-center mx-auto mb-6 pulse">
+          <span class="text-2xl">🏦</span>
+        </div>
+        <p class="text-doom-text text-lg font-semibold">Connecting securely...</p>
+        <p class="text-doom-muted text-sm mt-2">Bank-level 256-bit encryption</p>
+      </div>
+    </div>`;
+}
+
+function renderScanning() {
+  const { scanProgress, scanLabel, scanLeaksVisible } = state;
+  const visibleLeaks = LEAKS_PREVIEW.slice(0, scanLeaksVisible);
+  return `
+    <div class="min-h-screen bg-doom-bg flex items-center justify-center p-6">
+      <div class="w-full max-w-sm text-center">
+        <div class="text-4xl mb-6">🔍</div>
+        <h2 class="text-doom-text text-xl font-bold mb-2">Scanning your accounts</h2>
+        <p class="text-doom-muted text-sm mb-8">6 months of transactions</p>
+
+        <div class="h-1.5 bg-doom-border rounded-full overflow-hidden mb-4">
+          <div class="h-full bg-doom-amber rounded-full transition-all duration-500"
+            style="width:${scanProgress}%"></div>
+        </div>
+        <p class="text-doom-muted text-sm">${scanLabel}</p>
+
+        <div class="mt-10 space-y-3">
+          ${visibleLeaks.map(leak => `
+            <div class="flex items-center justify-between bg-doom-card border border-doom-border rounded-xl px-4 py-3 text-left fade-in">
+              <span class="text-doom-text text-sm">${leak.label}</span>
+              <span class="text-doom-amber font-semibold text-sm">${leak.amount}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderDashboard() {
+  const maxHabit = Math.max(...HABITS.map(h => h.monthlyAvg), 1);
+  const activeHabits = HABITS.filter(h => state.enabledHabits.has(h.category));
+  const whatIfMonthly = activeHabits.reduce((s, h) => s + h.monthlyAvg, 0);
+  const whatIfYearly = whatIfMonthly * 12;
+  const whatIfFv10 = futureValue(whatIfMonthly, 10);
+
+  return `
+    <div class="min-h-screen bg-doom-bg">
+      <!-- Header -->
+      <header class="flex items-center justify-between px-6 py-4 border-b border-doom-border">
+        <button onclick="setState({page:'landing'})" class="text-doom-muted text-sm flex items-center gap-1">← Back</button>
+        <span class="flex items-center gap-2 text-doom-text font-bold text-base">
+          <span>💸</span> Subscription Doom
+        </span>
+        <button class="text-doom-muted text-xl">⚙️</button>
+      </header>
+
+      <!-- Hero -->
+      <div class="bg-gradient-to-b from-[#1E1408] to-[#0D0A06] border-b border-doom-border px-6 py-8 text-center">
+        <div class="flex items-center justify-center gap-2 mb-1">
+          <h1 class="text-doom-text text-4xl font-bold tracking-tight">${fmt(totalMonthly)}</h1>
+          <span class="text-doom-amber text-lg font-semibold">/ month</span>
+          <span class="text-xl">💸</span>
+        </div>
+        <p class="text-doom-muted text-sm mb-1">Quietly leaving your life</p>
+        <p class="text-doom-muted text-base">
+          <span class="text-doom-gold font-semibold">${fmt(totalYearly)}</span> / year
+        </p>
+      </div>
+
+      <div class="px-4 py-6 max-w-lg mx-auto space-y-8">
+
+        <!-- TOP LEAKS -->
+        <section>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-doom-text font-bold text-base">Your Top Leaks</h2>
+            <button class="text-doom-muted text-xl">···</button>
+          </div>
+          <div class="space-y-3">
+            ${TOP_LEAKS.map(item => {
+              const fv10 = futureValue(item.monthlyAvg, 10);
+              return `
+              <div class="bg-doom-card border border-doom-border rounded-2xl p-4">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                    style="background-color:${item.color}22;border:1px solid ${item.color}44">
+                    ${item.emoji}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-doom-text font-semibold text-sm truncate">${item.label ?? item.merchant}</p>
+                  </div>
+                  <div class="text-right flex-shrink-0">
+                    <p class="text-doom-text font-bold text-sm">
+                      <span class="text-doom-amber">${fmt(item.monthlyAvg)}</span>
+                      <span class="text-doom-muted text-xs">/mo</span>
+                    </p>
+                    <p class="text-doom-muted text-xs">– ${fmtCompact(item.yearlyTotal)}/yr</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5 text-doom-green text-xs">
+                  <span>→</span>
+                  <span class="font-semibold">${fmtCompact(fv10)}</span>
+                  <span class="text-doom-muted">if invested over 10 years</span>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </section>
+
+        <!-- SUBSCRIPTIONS -->
+        <section>
+          <div class="flex items-center justify-between mb-1">
+            <h2 class="text-doom-text font-bold text-base">Subscriptions</h2>
+            <span class="text-doom-muted text-xs">${fmt(subMonthly)}/mo total</span>
+          </div>
+          <p class="text-doom-muted text-xs mb-4">${formatCurrency(subMonthly * 12)} quietly leaving every year</p>
+          <div class="bg-doom-card border border-doom-border rounded-2xl px-4 divide-y divide-doom-border">
+            ${SUBSCRIPTIONS.map(sub => `
+              <div class="flex items-center gap-3 py-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                  style="background-color:${sub.color}22">${sub.emoji}</div>
+                <span class="text-doom-text text-sm flex-1">${sub.merchant}</span>
+                <div class="text-right">
+                  <span class="text-doom-text font-semibold text-sm">${fmt(sub.monthlyAvg)}</span>
+                  <span class="text-doom-muted text-xs">/mo</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+
+        <!-- HABITS -->
+        <section>
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-doom-text font-bold text-base">Habits</h2>
+              <p class="text-doom-muted text-xs mt-0.5">This is where it adds up</p>
+            </div>
+            <button class="text-doom-muted text-xl">···</button>
+          </div>
+          <div class="bg-doom-card border border-doom-border rounded-2xl px-4">
+            ${HABITS.map(h => {
+              const pct = Math.round((h.monthlyAvg / maxHabit) * 100);
+              return `
+              <div class="py-3 border-b border-doom-border last:border-0">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-base">${h.emoji}</span>
+                    <span class="text-doom-text text-sm">${h.label}</span>
+                  </div>
+                  <span class="text-doom-amber font-bold text-sm">${fmt(h.monthlyAvg)}/mo</span>
+                </div>
+                <div class="h-1.5 bg-doom-border rounded-full overflow-hidden">
+                  <div class="h-full rounded-full" style="width:${pct}%;background-color:${h.color}"></div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </section>
+
+        <!-- INVESTMENT IMPACT -->
+        <section>
+          <div class="mb-4">
+            <h2 class="text-doom-text font-bold text-base">Investment Impact</h2>
+            <p class="text-doom-muted text-xs mt-0.5">If this money worked for you instead</p>
+          </div>
+          <div class="space-y-3">
+            ${HABITS.slice(0, 4).map(h => {
+              const fv10 = futureValue(h.monthlyAvg, 10);
+              return `
+              <div class="bg-doom-card border border-doom-border rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-1">
+                  <div class="flex items-center gap-2">
+                    <span>${h.emoji}</span>
+                    <span class="text-doom-text text-sm font-semibold">${h.label}</span>
+                  </div>
+                  <span class="text-doom-muted text-xs">${fmt(h.monthlyAvg)}/mo</span>
+                </div>
+                <div class="text-doom-muted text-xs mb-2">${fmt(h.yearlyTotal)}/yr</div>
+                <div class="flex items-center gap-2 text-doom-green text-sm">
+                  <span>If invested at 7% for 10 years:</span>
+                </div>
+                <p class="text-doom-green font-bold text-xl mt-1">→ ${fmtCompact(fv10)}</p>
+              </div>`;
+            }).join('')}
+          </div>
+        </section>
+
+        <!-- WHAT IF -->
+        <section>
+          <div class="mb-4">
+            <h2 class="text-doom-text font-bold text-base">What If</h2>
+            <div class="flex items-center justify-between mt-0.5">
+              <p class="text-doom-muted text-xs">Toggle habits to see your savings</p>
+              <span class="text-doom-muted text-xs">
+                You keep <span class="text-doom-gold font-semibold">${fmt(whatIfMonthly)}</span>/month
+              </span>
+            </div>
+          </div>
+          <div class="bg-doom-card border border-doom-border rounded-2xl px-4">
+            ${HABITS.map(h => {
+              const enabled = state.enabledHabits.has(h.category);
+              const s5 = futureValue(h.monthlyAvg, 5);
+              const s10 = futureValue(h.monthlyAvg, 10);
+              return `
+              <div class="py-3 border-b border-doom-border last:border-0">
+                <div class="flex items-center gap-3">
+                  <button onclick="toggleHabit('${h.category}')"
+                    class="w-5 h-5 rounded flex-shrink-0 border-2 flex items-center justify-center transition-colors"
+                    style="${enabled ? 'background:#F5A623;border-color:#F5A623' : 'background:transparent;border-color:#8A7D68'}">
+                    ${enabled ? `<svg class="w-3 h-3" style="color:#0D0A06" fill="none" viewBox="0 0 12 12">
+                      <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>` : ''}
+                  </button>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                      <span class="text-doom-text text-sm">${h.label}</span>
+                      <span class="text-doom-muted text-xs">${fmt(h.monthlyAvg)}/mo</span>
+                    </div>
+                    ${enabled ? `
+                    <div class="flex gap-3 mt-1">
+                      <span class="text-doom-green text-xs">→ <strong>${fmtCompact(s5)}</strong> in 5yr</span>
+                      <span class="text-doom-green text-xs">→ <strong>${fmtCompact(s10)}</strong> in 10yr</span>
+                    </div>` : ''}
+                  </div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+          ${activeHabits.length > 0 ? `
+          <div class="mt-4 rounded-2xl p-4" style="background:#0A1F10;border:1px solid #1A4D2A">
+            <p class="text-doom-green font-semibold text-sm mb-1">You'd keep ${fmt(whatIfMonthly)}/month</p>
+            <p class="text-doom-green text-sm mb-2">→ ${fmt(whatIfYearly)}/year saved</p>
+            <p class="text-doom-text font-bold text-base">
+              → ${fmtCompact(whatIfFv10)}
+              <span class="text-doom-muted font-normal text-sm"> invested over 10 years at 7%</span>
+            </p>
+          </div>` : ''}
+        </section>
+
+        <!-- FOOTER CTA -->
+        <div class="bg-doom-card border border-doom-border rounded-2xl p-5 text-center">
+          <p class="text-doom-muted text-xs mb-2">Want alerts when spending spikes?</p>
+          <h3 class="text-doom-text font-bold text-lg mb-1">Upgrade to Doom Pro</h3>
+          <p class="text-doom-muted text-sm mb-4">
+            Real-time alerts · Export reports · Deep insights · 12-month history
+          </p>
+          <button class="w-full bg-doom-amber text-doom-bg font-bold py-3.5 rounded-xl text-sm">
+            Start Free Trial
+          </button>
+          <p class="text-doom-muted text-xs mt-3">Cancel anytime. No doom surprises.</p>
+        </div>
+
+        <div class="h-8"></div>
+      </div>
+    </div>`;
+}
+
+// ─── Interactions ─────────────────────────────────────────────────────────────
+
+function startDemo() {
+  setState({ page: 'connecting' });
+  setTimeout(() => {
+    setState({ page: 'scanning', scanProgress: 0, scanLabel: SCAN_STEPS[0], scanLeaksVisible: 0 });
+    let stepIdx = 0;
+    const interval = setInterval(() => {
+      stepIdx++;
+      const progress = Math.min((stepIdx / SCAN_STEPS.length) * 100, 95);
+      const label = SCAN_STEPS[Math.min(stepIdx, SCAN_STEPS.length - 1)];
+      const scanLeaksVisible = Math.ceil((progress / 100) * LEAKS_PREVIEW.length);
+      setState({ scanProgress: progress, scanLabel: label, scanLeaksVisible });
+      if (stepIdx >= SCAN_STEPS.length) {
+        clearInterval(interval);
+        setState({ scanProgress: 100 });
+        setTimeout(() => setState({ page: 'dashboard' }), 400);
+      }
+    }, 600);
+  }, 800);
+}
+
+function toggleHabit(category) {
+  const next = new Set(state.enabledHabits);
+  if (next.has(category)) next.delete(category);
+  else next.add(category);
+  setState({ enabledHabits: next });
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+
+function render() {
+  const app = document.getElementById('app');
+  const { page } = state;
+  if (page === 'landing')    app.innerHTML = renderLanding();
+  else if (page === 'connecting') app.innerHTML = renderConnecting();
+  else if (page === 'scanning')   app.innerHTML = renderScanning();
+  else if (page === 'dashboard')  app.innerHTML = renderDashboard();
+}
+
+render();
+</script>
+</body>
+</html>
