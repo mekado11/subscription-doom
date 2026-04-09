@@ -9,12 +9,12 @@ function Toggle({ enabled, onChange }) {
   return (
     <button
       onClick={() => onChange(!enabled)}
-      className="relative w-11 h-6 rounded-full transition-colors flex-shrink-0"
+      className="relative w-12 h-7 rounded-full transition-colors flex-shrink-0 overflow-hidden"
       style={{ background: enabled ? 'linear-gradient(135deg, #7C3AED, #EC4899)' : 'rgba(255,255,255,0.12)' }}
     >
       <span
-        className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform shadow-sm"
-        style={{ transform: enabled ? 'translateX(22px)' : 'translateX(2px)' }}
+        className="absolute top-1 w-5 h-5 rounded-full bg-white transition-transform shadow-sm"
+        style={{ transform: enabled ? 'translateX(25px)' : 'translateX(3px)' }}
       />
     </button>
   )
@@ -58,6 +58,43 @@ function Row({ icon, label, value, chevron = false, danger = false, onClick, chi
   )
 }
 
+function DeleteModal({ onClose, onConfirm }) {
+  const [typed, setTyped] = useState('')
+  const match = typed.toLowerCase() === 'delete my account'
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
+      <div className="glass rounded-3xl p-6 w-full max-w-sm">
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(239,68,68,0.15)' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+          </svg>
+        </div>
+        <h3 className="text-white font-bold text-lg text-center mb-1">Delete Account</h3>
+        <p className="text-white/50 text-sm text-center mb-5">This permanently deletes your data. Type <span className="text-red-400 font-mono">delete my account</span> to confirm.</p>
+        <input
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-red-400/50 mb-4 font-mono"
+          placeholder="delete my account"
+          value={typed}
+          onChange={e => setTyped(e.target.value)}
+          autoFocus
+        />
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-3 rounded-xl text-white/60 text-sm font-semibold" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            Cancel
+          </button>
+          <button
+            onClick={match ? onConfirm : undefined}
+            className="flex-1 py-3 rounded-xl text-white text-sm font-semibold transition-all"
+            style={{ background: match ? '#EF4444' : 'rgba(239,68,68,0.2)', opacity: match ? 1 : 0.5, cursor: match ? 'pointer' : 'not-allowed' }}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
@@ -65,6 +102,7 @@ export default function ProfilePage() {
   const [name, setName] = useState(user?.name ?? 'Your Name')
   const [editingName, setEditingName] = useState(false)
   const [budget, setBudget] = useState(2000)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   const [notifs, setNotifs] = useState({
     weeklyReport: true,
@@ -77,8 +115,19 @@ export default function ProfilePage() {
     { bank: 'Chase', type: 'Checking ••4829', color: '#117ACA' },
   ]
 
+  function handleDeleteConfirm() {
+    signOut()
+    navigate('/')
+  }
+
   return (
     <div className="min-h-screen">
+      {showDeleteModal && (
+        <DeleteModal
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteConfirm}
+        />
+      )}
 
       {/* Header */}
       <header
@@ -239,10 +288,9 @@ export default function ProfilePage() {
         {/* Coming Soon */}
         <Section title="Coming Soon">
           {[
-            { label: 'Doom Score',        desc: 'Your financial health in one number' },
             { label: 'Friend comparisons', desc: 'See how you compare (opt-in)' },
-            { label: 'Cancel assist',      desc: 'One-click cancel for subscriptions' },
             { label: 'Share your doom',    desc: 'Shareable spending card' },
+            { label: 'AI advisor',         desc: 'Personalized money coaching' },
           ].map(({ label, desc }) => (
             <div
               key={label}
@@ -294,6 +342,7 @@ export default function ProfilePage() {
             }
             label="Delete my account"
             danger
+            onClick={() => setShowDeleteModal(true)}
           />
         </Section>
 

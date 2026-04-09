@@ -14,16 +14,19 @@ const HABIT_CATEGORIES = new Set([
   'Food Delivery',
   'Rideshare',
   'Shopping',
+  'Travel',
 ])
 
-// Updated palette to match glassmorphism design
-const CATEGORY_META = {
-  'Coffee Shops':   { label: 'Coffee',       color: '#FBBF24' },
-  'Restaurants':    { label: 'Eating Out',    color: '#F87171' },
-  'Bars & Alcohol': { label: 'Alcohol',       color: '#C084FC' },
-  'Food Delivery':  { label: 'Food Delivery', color: '#34D399' },
-  'Rideshare':      { label: 'Rideshare',     color: '#60A5FA' },
-  'Shopping':       { label: 'Shopping',      color: '#A78BFA' },
+// health: 'okay' | 'watch' | 'creeping' | 'bleeding'
+// benchmark: reasonable monthly spend in $
+export const CATEGORY_META = {
+  'Coffee Shops':   { label: 'Coffee',        color: '#FBBF24', health: 'watch',    healthLabel: 'Adds up fast',    benchmark: 60  },
+  'Restaurants':    { label: 'Eating Out',     color: '#F97316', health: 'creeping', healthLabel: 'Can creep up',    benchmark: 200 },
+  'Bars & Alcohol': { label: 'Alcohol',        color: '#C084FC', health: 'watch',    healthLabel: 'Debatable',       benchmark: 80  },
+  'Food Delivery':  { label: 'Food Delivery',  color: '#F87171', health: 'bleeding', healthLabel: 'Convenience tax', benchmark: 80  },
+  'Rideshare':      { label: 'Rideshare',      color: '#60A5FA', health: 'bleeding', healthLabel: 'Bleeding',        benchmark: 80  },
+  'Shopping':       { label: 'Shopping',       color: '#A78BFA', health: 'bleeding', healthLabel: 'Bleeding',        benchmark: 150 },
+  'Travel':         { label: 'Travel',         color: '#34D399', health: 'okay',     healthLabel: 'Worth it',        benchmark: 300 },
 }
 
 // Letter-avatar metadata for subscription brands
@@ -34,6 +37,66 @@ const SUB_META = {
   'Gym & Fitness':        { letter: 'Gm', color: '#F59E0B' },
   'iCloud Storage':       { letter: 'iC', color: '#3B82F6' },
   'YouTube Premium':      { letter: 'YT', color: '#FF0000' },
+}
+
+// Cancel instructions per subscription
+export const CANCEL_INFO = {
+  'Netflix': {
+    difficulty: 'Easy',
+    steps: [
+      'Open netflix.com and sign in',
+      'Click your profile icon → Account',
+      'Under Membership & Billing → Cancel Membership',
+      'Confirm cancellation — takes effect at end of billing period',
+    ],
+  },
+  'Spotify': {
+    difficulty: 'Easy',
+    steps: [
+      'Go to spotify.com/account and sign in',
+      'Under Your Plan → Change Plan',
+      'Scroll down → Cancel Premium',
+      'Follow the confirmation prompts',
+    ],
+  },
+  'Adobe Creative Cloud': {
+    difficulty: 'Hard',
+    warning: 'Early cancellation fee may apply if on annual plan',
+    steps: [
+      'Sign in to account.adobe.com',
+      'Under Plans → Manage Plan',
+      'Select Cancel Plan',
+      'Review any fees before confirming — call support if needed',
+    ],
+  },
+  'Gym & Fitness': {
+    difficulty: 'Hard',
+    warning: 'Usually requires an in-person visit or certified mail',
+    steps: [
+      'Visit your gym location in person',
+      'Request a cancellation form from the front desk',
+      'Get written confirmation of your cancellation',
+      'Check for remaining contract obligations or freeze options',
+    ],
+  },
+  'iCloud Storage': {
+    difficulty: 'Easy',
+    steps: [
+      'Open Settings on your iPhone',
+      'Tap your name → iCloud → Manage Account Storage',
+      'Tap Change Storage Plan',
+      'Select Free (5 GB) and confirm',
+    ],
+  },
+  'YouTube Premium': {
+    difficulty: 'Easy',
+    steps: [
+      'Go to youtube.com and sign in',
+      'Click your profile → Purchases and memberships',
+      'Click Manage next to YouTube Premium',
+      'Select Deactivate and confirm',
+    ],
+  },
 }
 
 /**
@@ -81,6 +144,7 @@ function detectSubscriptions(transactions) {
         yearlyTotal: +(avgAmount * 12).toFixed(2),
         txnCount: txns.length,
         type: 'subscription',
+        cancelInfo: CANCEL_INFO[merchant] ?? null,
       })
     }
   }
@@ -112,6 +176,9 @@ function detectHabits(transactions) {
       category,
       label: meta?.label ?? category,
       color: meta?.color ?? '#8B5CF6',
+      health: meta?.health ?? 'watch',
+      healthLabel: meta?.healthLabel ?? '',
+      benchmark: meta?.benchmark ?? 100,
       monthlyAvg: +monthlyAvg.toFixed(2),
       yearlyTotal: +(monthlyAvg * 12).toFixed(2),
       txnCount: txns.length,
@@ -121,6 +188,38 @@ function detectHabits(transactions) {
   }
 
   return habits.sort((a, b) => b.monthlyAvg - a.monthlyAvg)
+}
+
+/**
+ * Calculate Doom Score (0–100). Lower = more financial doom.
+ * 0–25: Critical Doom · 26–50: High Doom · 51–75: Moderate · 76–100: Financially Chill
+ */
+export function calculateDoomScore(analysis) {
+  const { summary, subscriptions, habits } = analysis
+  const ASSUMED_INCOME = 5000
+
+  let score = 100
+
+  // Spending ratio penalty
+  const spendRatio = summary.totalMonthly / ASSUMED_INCOME
+  score -= Math.round(spendRatio * 70)
+
+  // Subscription count penalty (> 3 is excessive)
+  score -= Math.max(0, subscriptions.length - 3) * 4
+
+  // Bleeding category over-budget penalties
+  for (const habit of habits) {
+    if (habit.health === 'bleeding') {
+      const over = Math.max(0, habit.monthlyAvg - habit.benchmark)
+      score -= Math.round(over / 25)
+    }
+    if (habit.health === 'creeping') {
+      const over = Math.max(0, habit.monthlyAvg - habit.benchmark)
+      score -= Math.round(over / 50)
+    }
+  }
+
+  return Math.max(5, Math.min(100, score))
 }
 
 /**
@@ -139,7 +238,7 @@ export function analyzeTransactions(transactions) {
   const allItems = [...subscriptions, ...habits]
   const topLeaks = [...allItems].sort((a, b) => b.monthlyAvg - a.monthlyAvg).slice(0, 3)
 
-  return {
+  const analysis = {
     subscriptions,
     habits,
     topLeaks,
@@ -150,4 +249,7 @@ export function analyzeTransactions(transactions) {
       habitMonthly: +habitMonthly.toFixed(2),
     },
   }
+
+  analysis.doomScore = calculateDoomScore(analysis)
+  return analysis
 }

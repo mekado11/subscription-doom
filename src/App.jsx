@@ -5,6 +5,8 @@ import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import ProfilePage from './pages/ProfilePage'
 import ManualEntryPage from './pages/ManualEntryPage'
+import OnboardingPage from './pages/OnboardingPage'
+import SubscribePage from './pages/SubscribePage'
 
 // Redirect to /auth if not signed in
 function RequireAuth({ children }) {
@@ -53,10 +55,12 @@ function AppRoutes() {
           <Route path="/auth"        element={<AuthPage />} />
 
           {/* Protected — must be signed in */}
+          <Route path="/onboarding"  element={<RequireAuth><OnboardingPage /></RequireAuth>} />
           <Route path="/connect"     element={<RequireAuth><ConnectPage scanning /></RequireAuth>} />
           <Route path="/dashboard"   element={<RequireAuth><DashboardPage /></RequireAuth>} />
           <Route path="/profile"     element={<RequireAuth><ProfilePage /></RequireAuth>} />
           <Route path="/manual-entry"element={<RequireAuth><ManualEntryPage /></RequireAuth>} />
+          <Route path="/subscribe"   element={<RequireAuth><SubscribePage /></RequireAuth>} />
 
           {/* Fallback */}
           <Route path="*"            element={<Navigate to="/" replace />} />

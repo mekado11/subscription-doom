@@ -138,6 +138,24 @@ export function generateMockTransactions() {
     }
   }
 
+  // ── HABITS: Travel ────────────────────────────────────────────
+  const travel = ['Airbnb', 'Delta Airlines', 'Booking.com', 'Southwest', 'Marriott']
+  // Travel is less frequent — roughly 2-3 times over 6 months
+  const travelDates = [0, 1, 3] // months that have travel spend
+  for (const mi of travelDates) {
+    const count = mi === 1 ? 2 : 1
+    for (let i = 0; i < count; i++) {
+      txns.push({
+        id: id++,
+        merchant: travel[Math.floor(Math.random() * travel.length)],
+        category: 'Travel',
+        amount: jitter(185, 0.5),
+        date: dateInMonth(months[mi], 1 + Math.floor(Math.random() * 25)),
+        type: 'habit',
+      })
+    }
+  }
+
   // ── OTHER ──────────────────────────────────────────────────────
   const other = [
     { merchant: 'Electric Bill', category: 'Utilities', amount: 95 },

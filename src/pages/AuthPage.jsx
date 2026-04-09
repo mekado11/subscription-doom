@@ -55,8 +55,8 @@ export default function AuthPage() {
     setTimeout(() => {
       const user = signIn(name, email)
       setLoading(false)
-      // New user → connect bank. Returning user → dashboard
-      navigate(user.hasScanned ? '/dashboard' : '/connect')
+      // New user → onboarding. Returning user → dashboard
+      navigate(user.hasScanned ? '/dashboard' : '/onboarding')
     }, 700)
   }
 
