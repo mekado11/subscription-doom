@@ -162,7 +162,7 @@ function OverviewTab({ analysis }) {
           <DoomRing score={doomScore} />
           <div className="flex-1">
             <ResponsiveContainer width="100%" height={130}>
-              <PieChart>
+              <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                 <Pie
                   data={pieData}
                   cx="50%"
@@ -171,6 +171,7 @@ function OverviewTab({ analysis }) {
                   outerRadius={58}
                   paddingAngle={2}
                   dataKey="value"
+                  isAnimationActive={true}
                   onMouseEnter={(_, index) => setActiveIndex(index)}
                   onMouseLeave={() => setActiveIndex(null)}
                 >
@@ -178,6 +179,7 @@ function OverviewTab({ analysis }) {
                     <Cell
                       key={i}
                       fill={entry.color}
+                      stroke="transparent"
                       opacity={activeIndex === null || activeIndex === i ? 1 : 0.4}
                     />
                   ))}
